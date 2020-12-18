@@ -192,11 +192,9 @@ class Core():
                     if sport and dport:
                         # HTTPS
                         if sport == 443 or dport == 443:
-                            https = packet.payload.payload.payload.__bytes__(
-                            ).hex()
+                            https = packet.payload.payload.payload.__bytes__().hex()
                             if len(https) >= 10 and https[2:4] == '03':
-                                if https[0:2] in content_type and https[
-                                        4:6] in version:
+                                if https[0:2] in content_type and https[4:6] in version:
                                     protocol = version[https[4:6]]
                         elif sport in ports:
                             protocol = ports[sport] + version_add
@@ -264,8 +262,43 @@ class Core():
         return first_return, second_return, hexdump(packet, dump=True)
 
     def on_rightclick_item(self, idList):
+        plist = []
+        tmp = None
+        id_dict = {}
+        for this_id in idList:
+            previous_packet_time, packet = self.read_packet(int(this_id) - 1)
+            print(this_id + str(packet[IP].id))
+            #print(len(packet[TCP].load))
+            plist.append(packet)
+        for pkt in plist:
+            if str(pkt[IP].id) not in id_dict.keys():
+                id_dict[str(pkt[IP].id)] = PacketList()
+                id_dict[str(pkt[IP].id)].append(pkt)
+            else:
+                id_dict[str(pkt[IP].id)].append(pkt) 
+    
+        result_dict = {}
         
-        pass
+        for id_key in id_dict.keys():
+            tmp_dict = {}
+            for pkt in id_dict[id_key]:
+                tmp_dict[str(pkt[IP].frag)] = pkt
+            try:
+                result_dict[id_key] = tmp_dict['0']
+            except:
+                #QMessageBox.warning(self, "警告", "选择的报文中并没有IP分片报文或者frag未出现0以外值！")
+                return None
+            loads = b''
+            for frag in sorted(tmp_dict.keys()):
+                loads = loads + tmp_dict[frag].getlayer(Raw).load
+
+            result_dict[id_key].len += len(loads) -  len(result_dict[id_key][Raw].load)
+            result_dict[id_key][Raw].load = loads
+            result_dict[id_key].flags = 2 
+            result_dict[id_key].frag = 0
+            self.process_packet(result_dict[id_key], None)       
+        return tmp
+        
 
     def get_next_layer(self, packet):
         """

@@ -362,7 +362,11 @@ class SnifferUiWindow(QMainWindow):
             QMessageBox.warning(self, "警告", "只选择了一个！")
         else:
             self.timer.stop()
-            self.core.on_rightclick_item(idList)
+            dic = self.core.on_rightclick_item(idList)
+            if dic is not None:
+                pass
+            else:
+                QMessageBox.warning(self, "警告", "选择的报文中并没有IP分片报文或者frag未出现0以外值！")    
             if not self.core.pause_flag and not self.core.stop_flag:
                 self.action_update.setDisabled(False)
 
