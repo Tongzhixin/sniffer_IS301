@@ -1,0 +1,6 @@
+psutil==5.7.3
+pyinstaller==4.1
+PyQt5==5.15.1
+pywin32==300
+scapy==2.4.4
+WMI==1.5.1
